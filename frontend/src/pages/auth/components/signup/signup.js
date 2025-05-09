@@ -3,10 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Avatar, Box, CircularProgress, Container, CssBaseline, Typography, TextField, Button, Grid, Link } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import { useSnackbar } from 'notistack';
+import { Backdrop } from '@mui/material';
+import { signup } from '../services/auth/auth';
 
 const defaultTheme = createTheme();
 
 export default function SignUp() {
+    const{enqueueSnackbar} = useSnackbar();
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         email: '',
@@ -24,14 +28,34 @@ export default function SignUp() {
     const handleSubmit = async (event) => {
         event.preventDefault();
         setLoading(true);
+        try{
+            const response = await signup(formData);
+            if(response.status === 201){
+                navigate('/login');
+                enqueueSnackbar('Signup successful',{variant:'success', autoHideDuration: 5000});
+            }
+
+        }catch(error){
+            if(error.response.status === 406 &&error.response){
+                enqueueSnackbar('Email already exists',{variant:'error', autoHideDuration: 5000});
+            }
+            else{
+                enqueueSnackbar('Signup failed',{variant:'error', autoHideDuration: 5000});
+            }
+        }
+    
+        finally{
+            setLoading(false);
+        }
         console.log(formData);
-        setLoading(false);
+        
     }
 
     const handleSignInClick = () => {
         navigate('/login');
     }
     return (
+        <>
         <ThemeProvider theme={defaultTheme}>
             <Container component="main" maxWidth={false} sx={{ width: '100vw', display: 'flex', justifyContent: 'center' }}>
                 <CssBaseline />
@@ -142,5 +166,12 @@ export default function SignUp() {
                 </Box>
             </Container>
         </ThemeProvider>
+        <Backdrop
+        sx={{color: '#fff', zIndex: (theme)=>theme.zIndex.drawer + 1}}
+        open = {loading}
+        >
+            <CircularProgress color="success"  />
+        </Backdrop>
+        </>
     )
 }
