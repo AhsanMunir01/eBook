@@ -1,51 +1,120 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+import MenuIcon from '@mui/icons-material/Menu';
+import { Link, useLocation } from 'react-router-dom';
+import {useState} from 'react';
+import{isAdminLoggedIn, isCustomerLoggedIn} from '../../utils/common';
+import { useNavigate } from 'react-router-dom';
+import { removeToken } from '../../utils/common';
 
 export default function Header() {
+   const [isAdmin, setIsAdmin] = useState(false);
+   const [isCustomer, setIsCustomer] = useState(false);
+   const navigate = useNavigate();
+   const location = useLocation();
+
+   useEffect(() => {
+    const fetchUserRole = async () => {
+        try{
+            const isAdmin = await isAdminLoggedIn();
+            const isCustomer = await isCustomerLoggedIn();
+            setIsAdmin(isAdmin);
+            setIsCustomer(isCustomer);
+        }catch(error){
+            console.error(`Error fetching user role: ${error}`);
+        }
+   };
+        fetchUserRole();
+    }, [location]);
+
+    const handleLogout = () => {
+        navigate('/login');
+        removeToken()
+    }
     return (
-        <header style={{
-            backgroundColor: '#1976d2', // Material blue
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-            padding: '0',
-        }}>
-            <nav style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                maxWidth: '100vw',
-                height: '48px',
-                padding: '0 1.5rem',
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    {/* Hamburger Icon */}
-                    <span style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect y="4" width="24" height="2" rx="1" fill="white"/>
-                            <rect y="11" width="24" height="2" rx="1" fill="white"/>
-                            <rect y="18" width="24" height="2" rx="1" fill="white"/>
-                        </svg>
-                    </span>
-                    <span style={{ color: 'white', fontWeight: 500, fontSize: '1.1rem', letterSpacing: '0.5px' }}>
-                        Book App
-                    </span>
-                </div>
-                <div style={{ display: 'flex', gap: '1.2rem' }}>
-                    <Link to="/login" style={{
-                        color: 'white',
-                        textDecoration: 'none',
-                        fontWeight: 'bold',
-                        fontSize: '1rem',
-                        letterSpacing: '0.5px',
-                    }}>LOGIN</Link>
-                    <Link to="/register" style={{
-                        color: 'white',
-                        textDecoration: 'none',
-                        fontWeight: 'bold',
-                        fontSize: '1rem',
-                        letterSpacing: '0.5px',
-                    }}>REGISTER</Link>
-                </div>
-            </nav>
-        </header>
-    );
+        <>
+            {!isAdmin && !isCustomer && (
+                <Box sx={{flexGrow: 1}}>
+                    <AppBar position="static">
+                        <Toolbar>
+                            <IconButton
+                            size = "large"
+                            edge = "start"
+                            color = "inherit"
+                            aria-label = "menu"
+                            sx = {{mr: 2}}
+                            >
+                                <MenuIcon />
+                            </IconButton>
+                            <Typography variant="h6" component="div" sx={{flexGrow: 1}}>
+                               Book Store
+                            </Typography>
+                            <Button component = {Link} to= "/login" color = "inherit">
+                                Login
+                            </Button>
+                            <Button component = {Link} to= "/register" color = "inherit">
+                                Register
+                            </Button>
+                        </Toolbar>
+                    </AppBar>
+                </Box>
+            )}
+            
+            {isAdmin && (
+                <Box sx={{flexGrow: 1}}>
+                    <AppBar position="static">
+                        <Toolbar>
+                            <IconButton
+                            size = "large"
+                            edge = "start"
+                            color = "inherit"
+                            aria-label = "menu"
+                            sx = {{mr: 2}}
+                            >
+                                <MenuIcon />
+                            </IconButton>
+                            <Typography variant="h6" component="div" sx={{flexGrow: 1}}>
+                               Admin
+                            </Typography>
+                            <Button component = {Link} to= "/admin/dashboard" color = "inherit">Dashboard</Button>
+                            <Button component = {Link} to= "/admin/book/post" color = "inherit">Post Book</Button>
+                            <Button component = {Link} to= "/admin/order" color = "inherit">View Order</Button>
+                            <Button onClick = {handleLogout} color = "inherit">Logout</Button>
+                        </Toolbar>
+                    </AppBar>
+                </Box>
+            )}
+            {isCustomer && (
+                <Box sx={{flexGrow: 1}}>
+                    <AppBar position="static">
+                        <Toolbar>
+                            <IconButton
+                            size = "large"
+                            edge = "start"
+                            color = "inherit"
+                            aria-label = "menu"
+                            sx = {{mr: 2}}
+                            >
+                                <MenuIcon />
+                            </IconButton>
+                            <Typography variant="h6" component="div" sx={{flexGrow: 1}}>
+                               Customer 
+                            </Typography>
+                            <Button component = {Link} to= "/customer/dashboard" color = "inherit">
+                                Dashboard
+                            </Button>
+                            <Button onClick = {handleLogout} color = "inherit">
+                                Logout
+                            </Button>
+                        </Toolbar>
+                    </AppBar>
+                </Box>
+            )}
+        </>
+    )    
 }

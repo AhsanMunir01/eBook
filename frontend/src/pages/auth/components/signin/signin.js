@@ -6,6 +6,8 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useSnackbar } from 'notistack';
 import { Backdrop } from '@mui/material';
 import { signin } from '../services/auth/auth';
+import { saveToken, isAdminLoggedIn, isCustomerLoggedIn } from '../../../../utils/common';
+
 
 const defaultTheme = createTheme();
 
@@ -30,12 +32,29 @@ export default function Signin() {
             const response = await signin(formData);
             if(response.status === 200){
                 console.log(response);
+                const token = response.data.token;
+                saveToken(token);
+                if(isAdminLoggedIn()){
+                    navigate('/admin/dashboard');
+                }
+                else if(isCustomerLoggedIn()){
+                    navigate('/customer/dashboard');
+                }
             }
 
         }catch(error){
-            enqueueSnackbar('Invalid email or password',{variant:'error', autoHideDuration: 5000});
+            if (error.response) {
+                // The request was made and the server responded with a status code
+                // that falls out of the range of 2xx
+                enqueueSnackbar(error.response.data.message || 'Invalid email or password', {variant:'error', autoHideDuration: 5000});
+            } else if (error.request) {
+                // The request was made but no response was received
+                enqueueSnackbar('No response from server', {variant:'error', autoHideDuration: 5000});
+            } else {
+                // Something happened in setting up the request that triggered an Error
+                enqueueSnackbar('An error occurred', {variant:'error', autoHideDuration: 5000});
+            }
         }
-    
         finally{
             setLoading(false);
         }

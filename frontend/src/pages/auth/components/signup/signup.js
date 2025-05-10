@@ -18,15 +18,80 @@ export default function SignUp() {
         lastName: '',
         password: ''
     });
+    const [errors, setErrors] = useState({
+        email: '',
+        password: ''
+    });
     const [loading, setLoading] = useState(false);
+
+    const validateEmail = (email) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    };
+
+    const validatePassword = (password) => {
+        const minLength = 8;
+        const hasUpperCase = /[A-Z]/.test(password);
+        const hasLowerCase = /[a-z]/.test(password);
+        const hasNumbers = /\d/.test(password);
+        const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+        if (password.length < minLength) {
+            return 'Password must be at least 8 characters long';
+        }
+        if (!hasUpperCase) {
+            return 'Password must contain at least one uppercase letter';
+        }
+        if (!hasLowerCase) {
+            return 'Password must contain at least one lowercase letter';
+        }
+        if (!hasNumbers) {
+            return 'Password must contain at least one number';
+        }
+        if (!hasSpecialChar) {
+            return 'Password must contain at least one special character';
+        }
+        return '';
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
+        
+        // Validate email
+        if (name === 'email') {
+            setErrors(prev => ({
+                ...prev,
+                email: validateEmail(value) ? '' : 'Please enter a valid email address'
+            }));
+        }
+        
+        // Validate password
+        if (name === 'password') {
+            setErrors(prev => ({
+                ...prev,
+                password: validatePassword(value)
+            }));
+        }
     }
 
     const handleSubmit = async (event) => {
         event.preventDefault();
+        
+        // Validate all fields before submission
+        const emailError = validateEmail(formData.email) ? '' : 'Please enter a valid email address';
+        const passwordError = validatePassword(formData.password);
+        
+        setErrors({
+            email: emailError,
+            password: passwordError
+        });
+
+        if (emailError || passwordError) {
+            enqueueSnackbar('Please fix the validation errors before submitting', {variant:'error', autoHideDuration: 5000});
+            return;
+        }
+
         setLoading(true);
         try{
             const response = await signup(formData);
@@ -34,21 +99,22 @@ export default function SignUp() {
                 navigate('/login');
                 enqueueSnackbar('Signup successful',{variant:'success', autoHideDuration: 5000});
             }
-
         }catch(error){
-            if(error.response.status === 406 &&error.response){
-                enqueueSnackbar('Email already exists',{variant:'error', autoHideDuration: 5000});
-            }
-            else{
-                enqueueSnackbar('Signup failed',{variant:'error', autoHideDuration: 5000});
+            if (error.response) {
+                // The request was made and the server responded with a status code
+                // that falls out of the range of 2xx
+                enqueueSnackbar(error.response.data.message || 'Signup failed', {variant:'error', autoHideDuration: 5000});
+            } else if (error.request) {
+                // The request was made but no response was received
+                enqueueSnackbar('No response from server', {variant:'error', autoHideDuration: 5000});
+            } else {
+                // Something happened in setting up the request that triggered an Error
+                enqueueSnackbar('An error occurred', {variant:'error', autoHideDuration: 5000});
             }
         }
-    
         finally{
             setLoading(false);
         }
-        console.log(formData);
-        
     }
 
     const handleSignInClick = () => {
@@ -124,6 +190,8 @@ export default function SignUp() {
                                     autoComplete="email"
                                     value={formData.email}
                                     onChange={handleInputChange}
+                                    error={!!errors.email}
+                                    helperText={errors.email}
                                     InputProps={{ style: { background: '#fff' } }}
                                 />
                             </Grid>
@@ -138,6 +206,8 @@ export default function SignUp() {
                                     autoComplete="new-password"
                                     value={formData.password}
                                     onChange={handleInputChange}
+                                    error={!!errors.password}
+                                    helperText={errors.password}
                                     InputProps={{ style: { background: '#fff' } }}
                                 />
                             </Grid>

@@ -5,16 +5,24 @@ const cors = require('cors');
 const { createAnAdminAccount } = require('./utils/common');
 const app = express();
 const authRoute = require('./routes/auth/authRoute');
+const adminBookRoute = require('./routes/admin/bookRoute');
+const customerBookRoute = require('./routes/customer/customerRoute');
 
-// Enable CORS for all routes
-app.use(cors());
+
+const port = process.env.PORT;
+const mongoURI = process.env.MONGO_URI;
+const corsOrigin = process.env.CORS_ORIGIN;
+
+// Enable CORS for all routes with a more permissive configuration for development
+app.use(cors({
+  origin: '*', // Allow all origins during development
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-  
-const port = process.env.PORT;
-const mongoURI = process.env.MONGO_URI;
-
+ 
 mongoose.connect(mongoURI, {})
     .then(() => {
         console.log('MongoDB connected successfully');
@@ -30,3 +38,7 @@ app.listen(port, () => {
 });
 
 app.use('/api/auth', authRoute);
+
+app.use('/api/admin/books', adminBookRoute);
+
+app.use('/api/customer/books', customerBookRoute);
