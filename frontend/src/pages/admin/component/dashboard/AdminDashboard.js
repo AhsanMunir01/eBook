@@ -54,15 +54,17 @@ export default function AdminDashboard(){
         }
     };
 
-    const fetchBooks = useCallback(async () => {
+    const fetchBooks = async () => {
         setLoading(true);
+        
         try {
             console.log('Fetching books...');
             const response = await getAllBooks();
+           
             console.log('Response received:', response);
             if (response && response.data) {
                 console.log('Books data:', response.data);
-                setBooks(Array.isArray(response.data) ? response.data : []);
+                setBooks(Array.isArray(response.data.books) ? response.data.books : []);
             } else {
                 console.log('No books data in response');
                 setBooks([]);
@@ -80,11 +82,17 @@ export default function AdminDashboard(){
         } finally {
             setLoading(false);
         }
-    }, [enqueueSnackbar]);
+    };
+
+    useEffect(() => {
+        console.log(books);
+    }, [books]);
+
+   
 
     useEffect(() => {
         fetchBooks();
-    }, [fetchBooks]);
+    }, []);
     
     const handleUpdateBookClick = (id) => {
         navigate(`/admin/update-book/${id}/edit`);
