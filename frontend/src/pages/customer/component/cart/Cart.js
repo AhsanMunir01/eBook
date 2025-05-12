@@ -39,6 +39,18 @@ export default function Cart() {
   const [order, setOrder] = useState({ amount: 0 });
   const { enqueueSnackbar } = useSnackbar();
 
+   const [formData, setFormData] = useState({
+          title: "",
+          author: "",
+          description: "",
+          price: 0,
+          genre: "",
+          condition: "",
+          edition: "",
+          imageURL: ""
+          
+      });
+
   const fetchCartByUser = async () => {
     const id = localStorage.getItem("userId");
     setLoading(true);

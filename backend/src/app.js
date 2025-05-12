@@ -8,6 +8,7 @@ const authRoute = require('./routes/auth/authRoute');
 const adminBookRoute = require('./routes/admin/bookRoute');
 const customerBookRoute = require('./routes/customer/customerRoute');
 const customerCartRoute = require('./routes/customer/cartRoute');
+const customerOrderRoute = require('./routes/customer/orderRoute');
 const testRoute = require('./routes/testRoute');
 
 
@@ -47,6 +48,8 @@ app.use('/api/customer/books', customerBookRoute);
 
 // Modify this line for debugging
 app.use('/api/customer/cart', customerCartRoute);
+
+//app.use('/api/customer/orders', customerOrderRoute);
 
 // Add a direct route for testing
 app.use('/api/test', testRoute);

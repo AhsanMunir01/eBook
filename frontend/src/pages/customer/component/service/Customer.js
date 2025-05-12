@@ -55,5 +55,18 @@ export const getCartByUser = async (userId) => {
         console.error('Error fetching cart:', error.response?.data || error.message);
         throw error.response?.data || error;
     }
+};
+
+export const placeOrder = async (data) => {
+    console.log('Fetching cart for user:', userId);
+    try {
+
+        const response = await axiosInstance.post(`/api/customer/order`, data);
+        return response;
+    } catch (error) {
+        console.error('Error fetching cart:', error.response?.data || error.message);
+        throw error.response?.data || error;
+    }
 } 
+
 
