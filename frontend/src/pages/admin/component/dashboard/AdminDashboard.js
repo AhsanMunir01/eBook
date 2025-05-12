@@ -1,8 +1,8 @@
-import {useState, useEffect, useCallback} from "react";
+import {useState, useEffect} from "react";
 import {useSnackbar} from "notistack";
 import { useNavigate } from "react-router-dom";
-import { getAllBooks, deleteBook } from "../../services/admin";
-import { Backdrop, CircularProgress, Grid, Box, Typography, Button, Paper } from "@mui/material";
+import { getAllBooks, deleteBook, searchBooks } from "../../services/admin";
+import { Backdrop, CircularProgress, Grid, Box, Typography, Button, Paper, FormControl, Select, MenuItem, InputLabel } from "@mui/material";
 import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
 
@@ -35,16 +35,39 @@ const Item = styled(Paper)(({theme}) => ({
 export default function AdminDashboard(){
     const [books, setBooks] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [selectedBook, setSelectedBook] = useState('');
     const {enqueueSnackbar} = useSnackbar();
     const navigate = useNavigate();
+
+    const[genre] = useState(["Fiction",
+        "Non-Fiction", 
+        "Science Fiction", 
+        "Mystery",
+         "Romance",
+          "Horror", 
+          "Thriller",
+           "Biography",
+            "History", 
+            "Self-Help",
+             "Travel", 
+             "Children's",
+              "Young Adult",
+               "Cooking",
+                "Art", 
+                "Music",
+                 "Science",
+                  "Technology", 
+                  "Math", 
+                  "Language",
+                   "Other"]);
 
     const handleDeleteBook = async (id) => {
         setLoading(true);
         try {
             const response = await deleteBook(id);
-            if (response.status === 201) {
+            if (response.status === 200 || response.status === 204) {
                 enqueueSnackbar("Book deleted successfully", {variant: "success", autoHideDuration: 5000});
-               // fetchBooks(); // Refresh the books list after deletion
+                fetchBooks(); // Refresh the books list after deletion
             }
         } catch (error) {
             //console.error('Error details: ', error);
@@ -64,7 +87,8 @@ export default function AdminDashboard(){
             console.log('Response received:', response);
             if (response && response.data) {
                 console.log('Books data:', response.data);
-                setBooks(Array.isArray(response.data.books) ? response.data.books : []);
+                const booksData = response.data.books || response.data.book || [];
+                setBooks(Array.isArray(booksData) ? booksData : []);
             } else {
                 console.log('No books data in response');
                 setBooks([]);
@@ -83,16 +107,47 @@ export default function AdminDashboard(){
             setLoading(false);
         }
     };
+    useEffect(() => {
+        fetchBooks();
+    }, []);
 
     useEffect(() => {
         console.log(books);
     }, [books]);
 
    
-
-    useEffect(() => {
-        fetchBooks();
-    }, []);
+    const handleGenreChange = async (e) => {
+        setLoading(true);
+        const selectedGenre = e.target.value;
+        setSelectedBook(selectedGenre);
+        try {
+            console.log('Fetching books...');
+            const response = await searchBooks(selectedGenre);
+           
+            console.log('Response received:', response);
+            if (response && response.data) {
+                console.log('Books data:', response.data);
+                const booksData = response.data.books || response.data.book || [];
+                setBooks(Array.isArray(booksData) ? booksData : []);
+            } else {
+                console.log('No books data in response');
+                setBooks([]);
+                enqueueSnackbar("No books data received", {variant: "warning"});
+            }
+        } catch (error) {
+            console.error('Error fetching books:', error);
+            console.error('Error details:', {
+                message: error.message,
+                response: error.response,
+                status: error.response?.status
+            });
+            setBooks([]);
+            enqueueSnackbar(`Error fetching books: ${error.message}`, {variant: "error"});
+        } finally {
+            setLoading(false);
+        }
+    };
+   
     
     const handleUpdateBookClick = (id) => {
         navigate(`/admin/update-book/${id}/edit`);
@@ -100,7 +155,34 @@ export default function AdminDashboard(){
 
     return(
         <>
-        {console.log('Current books state:', books)}
+         <Grid 
+         sx= {{
+            marginTop: 3,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+         }}
+         >
+          <FormControl sx={{mt: 2 , width: 400}} margin="normal">
+            <InputLabel id="genre-label">Select Genre to filter</InputLabel>
+            <Select
+            labelId="genre-label"
+            id="genre"
+            value={selectedBook}
+            onChange ={handleGenreChange}
+            label="Genre"
+            >
+                <MenuItem value="">All Genres</MenuItem>
+                {genre.map((genre) => (
+                    <MenuItem key={genre} value={genre}>
+                        {genre}
+                        
+                    </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+         </Grid>
         <Box sx={{flexGrow: 1, p: 5}}>
             {books.length === 0 ? (
                 <Typography variant="h6" sx={{ textAlign: 'center', mt: 4 }}>

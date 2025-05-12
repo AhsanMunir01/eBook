@@ -11,15 +11,17 @@ const authenticateJWT = (req, res, next) => {
         return res.status(401).json({ message: 'Invalid authorization header format' });
     }
 
-    jwt.verify(token, process.env.JWT_SECRET, (error, user) => {
-        if (error) {
-            console.error(`Token verification error: ${error}`);
-            return res.status(403).json({ message: 'Invalid token' });
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = { 
+            id: decoded.id,  // Make sure this matches what your controller expects
+            role: decoded.role 
         };
-        req.user = user;
-        next(); 
-    })
-
+        next();
+    } catch (error) {
+        console.error(`Token verification error: ${error}`);
+        return res.status(403).json({ message: 'Invalid token' });
+    }
 };
 
 const authorizeRole = (roles) => {

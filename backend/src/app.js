@@ -7,6 +7,8 @@ const app = express();
 const authRoute = require('./routes/auth/authRoute');
 const adminBookRoute = require('./routes/admin/bookRoute');
 const customerBookRoute = require('./routes/customer/customerRoute');
+const customerCartRoute = require('./routes/customer/cartRoute');
+const testRoute = require('./routes/testRoute');
 
 
 const port = process.env.PORT;
@@ -42,3 +44,9 @@ app.use('/api/auth', authRoute);
 app.use('/api/admin/books', adminBookRoute);
 
 app.use('/api/customer/books', customerBookRoute);
+
+// Modify this line for debugging
+app.use('/api/customer/cart', customerCartRoute);
+
+// Add a direct route for testing
+app.use('/api/test', testRoute);

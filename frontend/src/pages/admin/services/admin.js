@@ -30,3 +30,34 @@ export const getAllBooks = async () => {
     }
 };
 
+export const updateBook = async (id, bookData) => {
+    try {
+        const response = await axiosInstance.put(`/api/admin/books/${id}`, bookData);
+        return response;
+    } catch (error) {
+        console.error('Error updating book:', error.response?.data || error.message);
+        throw error.response?.data || error;
+    }
+};
+
+export const getBookById = async (id) => {
+    try {
+        const response = await axiosInstance.get(`/api/admin/books/${id}`);
+        return response;
+    } catch (error) {
+        console.error('Error fetching book by ID:', error.response?.data || error.message);
+        throw error.response?.data || error;
+    }
+}; 
+
+export const searchBooks = async (genre) => {
+    try {
+        const response = await axiosInstance.get(`/api/admin/books/search/${genre}`);
+        return response;
+    } catch (error) {
+        console.error('Error searching books:', error.response?.data || error.message);
+        throw error.response?.data || error;
+    }
+};
+
+

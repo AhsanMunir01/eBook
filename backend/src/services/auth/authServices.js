@@ -1,7 +1,9 @@
 const bcrypte = require('bcrypt');
-const User = require('../../models/user');
+const User = require('../../models/User');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
+const Order = require('../../models/Order');
+
 
 const createUser = async (userData) => {
     try {
@@ -21,6 +23,13 @@ const createUser = async (userData) => {
             lastName: lastName,
             role: 'CUSTOMER',
         });
+        const newOrder = new Order({
+            amount: 0,
+            address: 'Default Address',
+            orderStatus: 'Pending',
+            user: user._id,
+        });
+        await newOrder.save();
         await user.save();  
         return user;
 
@@ -48,7 +57,7 @@ const loginUser = async (userData) => {
             process.env.JWT_SECRET,
             { expiresIn: '1d' }    
         );
-        return token;
+        return {token , id: existingUser._id};
 
     } catch (error) {
         console.error( `Error creating user account: ${error}`);

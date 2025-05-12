@@ -29,6 +29,7 @@ export const isAdminLoggedIn = () => {
 
 export const isCustomerLoggedIn = () => {
     const decodedToken = decodeToken();
+    console.log('Decoded token', decodedToken);
     return decodedToken?.role === 'CUSTOMER';
 };
 

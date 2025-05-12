@@ -24,22 +24,29 @@ export default function Signin() {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
     }
-
+    isCustomerLoggedIn();
     const handleSubmit = async (event) => {
         event.preventDefault();
         setLoading(true);
         try{
             const response = await signin(formData);
+
             if(response.status === 200){
                 console.log(response);
+                // localStorage.setItem('user', JSON.stringify(response.data.user));
+                // localStorage.setItem('userId', response.data.user._id);
                 const token = response.data.token;
+                const id = response.data.id;
+                localStorage.setItem('userId', id);
+                console.log('id', id);
                 saveToken(token);
                 if(isAdminLoggedIn()){
                     navigate('/admin/dashboard');
+                    return ;
                 }
-                else if(isCustomerLoggedIn()){
-                    navigate('/customer/dashboard');
-                }
+                
+                navigate('/customer/dashboard');
+                
             }
 
         }catch(error){
