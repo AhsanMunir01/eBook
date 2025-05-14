@@ -58,15 +58,16 @@ export const getCartByUser = async (userId) => {
 };
 
 export const placeOrder = async (data) => {
-    console.log('Fetching cart for user:', userId);
+    console.log('Placing order with data:', data);
+    
     try {
-
+        // Try with the singular form "order" instead of "orders"
         const response = await axiosInstance.post(`/api/customer/order`, data);
         return response;
     } catch (error) {
-        console.error('Error fetching cart:', error.response?.data || error.message);
+        console.error('Error placing order:', error.response?.data || error.message);
         throw error.response?.data || error;
     }
-} 
+};
 
 

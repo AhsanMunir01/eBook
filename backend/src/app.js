@@ -49,7 +49,7 @@ app.use('/api/customer/books', customerBookRoute);
 // Modify this line for debugging
 app.use('/api/customer/cart', customerCartRoute);
 
-//app.use('/api/customer/orders', customerOrderRoute);
+app.use('/api/customer/orders', customerOrderRoute);
 
 // Add a direct route for testing
 app.use('/api/test', testRoute);

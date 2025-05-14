@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { getCartByUser } from "../service/Customer";
+import React, { useEffect, useState, useCallback } from "react";
+import { getCartByUser, placeOrder } from "../service/Customer";
 import { useSnackbar } from "notistack";
 import {
   Box,
@@ -8,8 +8,16 @@ import {
   Paper,
   Backdrop,
   CircularProgress,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContentText,
+  DialogContent,
+  TextField,
+  DialogActions
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
+import { useNavigate } from "react-router-dom";
 
 const Img = styled("img")({
   margin: "auto",
@@ -38,28 +46,31 @@ export default function Cart() {
   const [cartItem, setCartItem] = useState([]);
   const [order, setOrder] = useState({ amount: 0 });
   const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate();
 
-   const [formData, setFormData] = useState({
-          title: "",
-          author: "",
-          description: "",
-          price: 0,
-          genre: "",
-          condition: "",
-          edition: "",
-          imageURL: ""
-          
-      });
+  const [formData, setFormData] = useState({
+    orderDescription: "",
+    address: ""
+  });
 
-  const fetchCartByUser = async () => {
+  const [open, setOpen] = useState(false);
+
+  const calculateTotalAmount = (items) => {
+    return items.reduce((total, item) => {
+      return total + (item.book ? parseFloat(item.book.price) * item.quantity : 0);
+    }, 0).toFixed(2);
+  };
+
+  const fetchCartByUser = useCallback(async () => {
     const id = localStorage.getItem("userId");
     setLoading(true);
     try {
       const response = await getCartByUser(id);
       if (response && response.data) {
-        const items = response.data.data || []; // Adjust according to actual API structure
-        const totalAmount = response.data.totalAmount || 0;
+        const items = response.data.data || [];
         setCartItem(Array.isArray(items) ? items : []);
+        
+        const totalAmount = calculateTotalAmount(items);
         setOrder({ amount: totalAmount });
       } else {
         setCartItem([]);
@@ -76,11 +87,54 @@ export default function Cart() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [enqueueSnackbar]);
 
   useEffect(() => {
     fetchCartByUser();
-  }, []);
+  }, [fetchCartByUser]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      // Get the user ID from localStorage
+      const userId = localStorage.getItem("userId");
+      
+      // IMPORTANT: Check if userId exists
+      if (!userId) {
+        enqueueSnackbar("User ID not found. Please log in again.", { variant: "error" });
+        setLoading(false);
+        return;
+      }
+      
+      // Include userId in the form data - use the exact property name expected by the backend
+      const orderData = {
+        ...formData,
+        userId: userId, // Make sure this property name matches exactly what the backend expects
+        totalAmount: order.amount
+      };
+      
+      console.log("Sending order data:", orderData); // Add debugging log
+      
+      const response = await placeOrder(orderData);
+      if (response.status === 201) {
+        navigate('/customer/dashboard');
+        enqueueSnackbar("Order placed successfully", { variant: "success", autoHideDuration: 5000 });
+        setOpen(false);
+      }
+    } catch (error) {
+      console.error('Error details:', error);
+      const errorMessage = error.message || 'Error while placing order';
+      enqueueSnackbar(errorMessage, { variant: "error", autoHideDuration: 5000 });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -120,6 +174,15 @@ export default function Cart() {
               <Grid item>
                 <Typography>Total amount: ${order.amount}</Typography>
               </Grid>
+              <Grid item>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => setOpen(true)} sx={{ mt: 2 }}
+                >
+                  Place Order
+                </Button>
+              </Grid>
             </Grid>
           </Box>
         </>
@@ -136,7 +199,55 @@ export default function Cart() {
           <Typography variant="h4">Nothing to see here</Typography>
         </Box>
       )}
-
+      <Dialog 
+        open={open} 
+        onClose={() => setOpen(false)} 
+        PaperProps={{
+          component: "form",
+          onSubmit: handleSubmit
+        }}
+      >
+        <DialogTitle>Place Order</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Place your order by adding any special instructions in description and address
+          </DialogContentText>
+          <TextField
+            autoFocus
+            required
+            margin="dense"
+            id="address"
+            label="Enter Address"
+            name="address"
+            type="text"
+            fullWidth
+            variant="standard"
+            multiline
+            maxRows={4}
+            value={formData.address}
+            onChange={handleInputChange}
+          />
+          <TextField
+            autoFocus
+            required
+            margin="dense"
+            id="orderDescription"
+            label="Enter Order Description"
+            name="orderDescription"
+            type="text"
+            fullWidth
+            variant="standard"
+            multiline
+            maxRows={4}
+            value={formData.orderDescription}
+            onChange={handleInputChange}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)}>Cancel</Button>
+          <Button type="submit">Place Order</Button>
+        </DialogActions>
+      </Dialog>
       <Backdrop
         sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
         open={loading}
